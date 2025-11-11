@@ -23,7 +23,6 @@ function setup() {
     "Submarine Volcano": color(0, 180, 220), // turchese oceano
     "Other / Unknown": color(200, 200, 200)  // grigio neutro
   };    
-
 }
 
 // DRAW
@@ -32,19 +31,23 @@ function draw() {
 
   drawTitle();
 
+  // calcolo dimensioni e posizione mappa
   let mapMargin = 50;
   let mapY = 100;
   let maxMapWidth = width - mapMargin * 2;
   let maxMapHeight = height - mapY - mapMargin;
 
+  // dimensioni base mappa
   const baseMapWidth = 800;
   const baseMapHeight = 500;
 
+  // calcolo fattore di scala
   let scaleFactor = min(maxMapWidth / baseMapWidth, maxMapHeight / baseMapHeight);
   let mapWidth = baseMapWidth * scaleFactor;
   let mapHeight = baseMapHeight * scaleFactor;
   let mapX = (width - mapWidth) / 2;
 
+  
   drawMap(mapX, mapY, mapWidth, mapHeight);
   drawV(mapX, mapY, mapWidth, mapHeight);
 
@@ -57,26 +60,29 @@ function draw() {
 
 // intestazione
 function drawTitle() {
+  // titolo
   fill('white');
   textFont('futura');
   textAlign(CENTER, TOP); 
   textSize(36);
   text("ASSIGNMENT 3 - La distribuzione dei vulcani nel mondo", width / 2, 20);
 
+  // sottotitolo
   textSize(16);
   text("Ogni cerchio rappresenta un vulcano: la grandezza rappresenta l'altitudine, il colore invece rappresenta la categoria.", width / 2, 70);
 }
 
 
-// disegno la mappa dei vulcani
+// mappa dei vulcani
 function drawMap(mapX, mapY, mapWidth, mapHeight) {
   noFill();
 }
 
-// disegno i vulcani
+// vulcani
 function drawV(mapX, mapY, mapWidth, mapHeight) {
   tooltip = null; // reset ogni frame
 
+  // ciclo sui dati
   for (let r = 0; r < data.getRowCount(); r++) {
     let row = data.getRow(r);
     let lat = float(row.get("Latitude"));
@@ -87,28 +93,28 @@ function drawV(mapX, mapY, mapWidth, mapHeight) {
     let status = row.get("Status") || "N/A";
     let typeCategory = row.get("TypeCategory") || "Other / Unknown";
 
+    // posizione sulla mappa
     let x = map(lon, -180, 180, mapX, mapX + mapWidth);
     let y = map(lat, 90, -90, mapY, mapY + mapHeight); 
     
-    // 🔽 dimensione ridotta
+    // dimensione (in base all'altitudine)
     let size = map(elev, -400, 6000, 4, 14); 
     size = constrain(size, 4, 14);
 
-    // colore base
+    // colore (in base alla categoria)
     let baseCol = typeColors[typeCategory] || typeColors["Other / Unknown"];
     let colFill = baseCol;
     let colStroke = lerpColor(baseCol, color(0), 0.4);
 
-    // hover → schiarisco fill e bordo bianco
+    // hover (schiarimento colore e tooltip)
     if (dist(mouseX, mouseY, x, y) < size/2) {
       colFill = lerpColor(baseCol, color(255), 0.5);
       colStroke = color(255);
       tooltip = {name, country, elev, status, typeCategory, x, y};
     }
 
-    // 🔽 trasparenza ridotta
-    colFill.setAlpha(140);   // 0 = invisibile, 255 = opaco
-    colStroke.setAlpha(180); // bordo meno trasparente
+    colFill.setAlpha(140);   
+    colStroke.setAlpha(180); 
 
     fill(colFill);
     stroke(colStroke);
@@ -117,16 +123,13 @@ function drawV(mapX, mapY, mapWidth, mapHeight) {
   }
 }
 
-
-
 // disegno tooltip
 function drawTooltip(v) {
   let txt = `NOME: ${v.name}
-PAESE: ${v.country}
-ALTITUDINE: ${v.elev} m
-CATEGORIA: ${v.typeCategory}
-STATUS: ${v.status}`;
-
+    PAESE: ${v.country}
+    ALTITUDINE: ${v.elev} m
+    CATEGORIA: ${v.typeCategory}
+    STATUS: ${v.status}`;
   textSize(12);
   let w = textWidth(v.name) + 120;
   let h = 100;
@@ -135,13 +138,9 @@ STATUS: ${v.status}`;
   let posX = mouseX + 10;
   let posY = mouseY + 10;
 
-  // se tooltip esce a destra → spostalo a sinistra
+  // spostamento tooltip se esce dallo schermo (da dx a sx)
   if (posX + w > width) {
     posX = mouseX - w - 10;
-  }
-  // se esce in basso → spostalo in alto
-  if (posY + h > height) {
-    posY = mouseY - h - 10;
   }
 
   fill(50, 50, 50, 220);
@@ -154,38 +153,40 @@ STATUS: ${v.status}`;
   text(txt, posX + 10, posY + 10);
 }
 
-
+// disegno legenda
 function drawLegend() {
   let startX = 50;              // posizione della prima colonna
   let startY = height - 120;    // posizione verticale
   let spacingY = 22;            // spaziatura verticale
   let colSpacing = 220;         // distanza tra le due colonne
 
+  // titolo legenda
   textAlign(LEFT, CENTER);
   textSize(14);
   fill(255);
   text("Legenda delle categorie dei vulcani:", startX, startY - 30);
 
-  let categories = Object.keys(typeColors);
+  // ottengo le categorie
+  let categories = Object.keys(typeColors); 
 
   for (let i = 0; i < categories.length; i++) {
     let category = categories[i];
     let col = typeColors[category];
 
     // calcolo colonna e riga
-    let colIndex = floor(i / 2);   // ogni 2 categorie si passa alla colonna successiva
-    let rowIndex = i % 2;          // 0 = prima riga, 1 = seconda riga
+    let colIndex = floor(i / 2);   
+    let rowIndex = i % 2;        
 
     let x = startX + colIndex * colSpacing;
     let y = startY + rowIndex * spacingY;
 
-    // disegno pallino
+    // disegno cerchio
     fill(col);
     stroke(lerpColor(col, color(0), 0.4));
     strokeWeight(0.8);
     ellipse(x, y, 14, 14);
 
-    // etichetta
+    // label categoria
     noStroke();
     fill(255);
     text(category, x + 25, y);
